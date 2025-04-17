@@ -9,7 +9,7 @@ interface NodeEurekaServerOptions {
 const defaultPort = NodeEurekaConfigService.getNumber('PORT', 500);
 
 
-export function NodeEurekaServer(options: NodeEurekaServerOptions) {
+export function NodeEurekaServer(options?: NodeEurekaServerOptions) {
   return function (constructor: Function) {
     const port = options?.port || defaultPort;
 

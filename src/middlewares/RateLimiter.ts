@@ -120,6 +120,8 @@ async function runRateLimitLogic(
     const key = `rl:global:${appName}:${ip}`;
     const count = await redis.incr(key);
     if (count === 1) await redis.expire(key, globalLimit.windowMs / 1000);
+    console.log(count,globalLimit);
+    
     if (count > globalLimit.max) {
       return res.status(429).json({ error: 'Global rate limit exceeded.' });
     }

@@ -16,16 +16,16 @@ const defaultretryCount = NodeEurekaConfigService.getNumber('RETRY_ATTEMPTS', 3)
 const deafultretryDelay = NodeEurekaConfigService.getNumber('RETRY_DELAY', 500);
 const defaultfailover = NodeEurekaConfigService.getBoolean('FAILOVER',false);
 const defaultcallerPort = NodeEurekaConfigService.getNumber('CALLER_PORT');
-const defaultserviceName = NodeEurekaConfigService.get('APP_NAME');
+const defaultserviceName = NodeEurekaConfigService.get('SERVICE_NAME');
 
 const FEIGN_CLIENT_KEY = Symbol('FEIGN_CLIENT');
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-export function NodeFeignClient(options: NodeFeignClientOptions): ClassDecorator {
+export function NodeFeignClient(options?: NodeFeignClientOptions): ClassDecorator {
   return function (target: any) {
     const retry = options?.retry||defaultretryCount
-    const retryDelay = options.retryDelay||deafultretryDelay;
+    const retryDelay = options?.retryDelay||deafultretryDelay;
     const failover = options?.failover||defaultfailover;
     const callerPort = options?.callerPort||defaultcallerPort;
     const serviceName = options?.serviceName||defaultserviceName;
@@ -58,7 +58,8 @@ export function NodeFeignClient(options: NodeFeignClientOptions): ClassDecorator
               }
 
               const maxRetries = retry ?? 1;
-              const Isfailover = failover ?? true;
+              const Isfailover = failover ?? false;
+              const delay = retryDelay??500
 
               for (let i = 0; i < instances.length; i++) {
                 const instanceMeta = NodeEurekaLoadBalancer.getInstance(serviceName, instances, 'ROUND_ROBIN');
@@ -87,7 +88,7 @@ export function NodeFeignClient(options: NodeFeignClientOptions): ClassDecorator
                     return await response.json();
                   } catch (err) {
                     ServiceLogs.warn(serviceName, `Attempt ${attempt} failed on ${instanceMeta.ip}:${instanceMeta.port}: ${err}`);
-                    await wait(100 * attempt);
+                    await wait(delay * attempt);
                   }
                 }
 

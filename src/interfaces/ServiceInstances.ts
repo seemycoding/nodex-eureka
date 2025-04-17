@@ -1,3 +1,5 @@
+import { RequestHandler } from 'express';
+
 export interface ServiceInstance {
     instanceId:string;
     appName: string;
@@ -16,6 +18,8 @@ export interface GatewayRoute {
   filters: string[]; // eg: "StripPrefix=1"
 }
 
+
+
 export interface Gateway{
  
     appName: string;
@@ -24,6 +28,13 @@ export interface Gateway{
     routes: GatewayRoute[];
     rateLimits?: RateLimitPolicy[];
     globalRateLimit?: GlobalRateLimit;
+    authFilters?:RequestHandler;
+    useBuiltInAuth?: boolean;
+    builtInAuthSecret?:string;
+    retry?:number;
+    retryDelay?:number;
+    failover?:boolean;
+
   
 }
 

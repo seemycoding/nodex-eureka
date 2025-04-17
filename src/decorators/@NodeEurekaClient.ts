@@ -8,18 +8,20 @@ interface NodeEurekaClientOptions {
   healthCheckPath: string;
 }
 
-const appName = NodeEurekaConfigService.get('APP_NAME');
-const port = NodeEurekaConfigService.getNumber('PORT');
-const eurekaServerUrl = NodeEurekaConfigService.get('EUREKA_SERVER_URL');
-const healthCheckPath = NodeEurekaConfigService.get('HEALTH_CHECK_PATH', '/health');
+const defaultAppName = NodeEurekaConfigService.get('APP_NAME');
+const defaultPort = NodeEurekaConfigService.getNumber('PORT');
+const defaulteurekaServerUrl = NodeEurekaConfigService.get('EUREKA_SERVER_URL');
+const defaulthealthCheckPath = NodeEurekaConfigService.get('HEALTH_CHECK_PATH', '/health');
 
-export function NodeEurekaClient(options: NodeEurekaClientOptions) {
+export function NodeEurekaClient(options?: NodeEurekaClientOptions) {
   return function (constructor: Function) {
-    const appName = options?.appName || NodeEurekaConfigService.get('APP_NAME');
-    const port = options?.port || NodeEurekaConfigService.getNumber('PORT');
-    const eurekaServerUrl = options?.eurekaServerUrl || NodeEurekaConfigService.get('EUREKA_SERVER_URL');
-    const healthCheckPath = options?.healthCheckPath || NodeEurekaConfigService.get('HEALTH_CHECK_PATH', '/health');
-
+    const appName = options?.appName || defaultAppName;
+    const port = options?.port || defaultPort;
+    const eurekaServerUrl = options?.eurekaServerUrl || defaulteurekaServerUrl;
+    const healthCheckPath = options?.healthCheckPath || defaulthealthCheckPath;
+    console.log(eurekaServerUrl);
+    
+    
     const client = new NodeEurekaClientService({
       appName,port,eurekaServerUrl,healthCheckPath
     });

@@ -22,6 +22,8 @@ export class NodeEurekaClientService {
 
   async register() {
     try {
+      console.log(`${this.options.eurekaServerUrl}/register`);
+      
       await axios.post(`${this.options.eurekaServerUrl}/register`, {
         appName: this.options.appName,
         port: this.options.port,

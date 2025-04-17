@@ -25,8 +25,12 @@ export class NodeEurekaConfigService {
     if (val === undefined) return fallback;
     return val.toLowerCase() === 'true';
   }
-  static getJSON<T = any>(key: string, defaultValue: T): T {
+  static getJSON<T = any>(key: string, defaultValue: T): T {    
+    console.log(process.env);
+    
     const rawValue = process.env[key];
+    console.log(rawValue,"rawValue");
+    
     if (!rawValue) return defaultValue;
   
     try {

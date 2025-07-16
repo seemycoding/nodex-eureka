@@ -1,5 +1,5 @@
 {
-  "name": "node-eureka",
+  "name": "@seemycode/node-eureka",
   "version": "1.0.0",
   "description": "Eureka Server For Node",
   "main": "src/index.ts",

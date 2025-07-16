@@ -21,16 +21,13 @@ export class NodeEurekaConfigService {
   }
 
   static getBoolean(key: string, fallback = false): boolean {
-    const val = process.env[key];
+    const val = process.env[key];    
     if (val === undefined) return fallback;
     return val.toLowerCase() === 'true';
   }
   static getJSON<T = any>(key: string, defaultValue: T): T {    
     console.log(process.env);
-    
-    const rawValue = process.env[key];
-    console.log(rawValue,"rawValue");
-    
+    const rawValue = process.env[key];    
     if (!rawValue) return defaultValue;
   
     try {

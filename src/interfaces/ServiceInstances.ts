@@ -26,14 +26,18 @@ export interface Gateway{
     port: number;
     eurekaServerUrl: string;
     routes: GatewayRoute[];
-    rateLimits?: RateLimitPolicy[];
-    globalRateLimit?: GlobalRateLimit;
+    rateLimit?:{
+    limits: RateLimitPolicy[];
+    globalRateLimit: GlobalRateLimit;
+    }
     authFilters?:RequestHandler;
     useBuiltInAuth?: boolean;
     builtInAuthSecret?:string;
-    retry?:number;
-    retryDelay?:number;
-    failover?:boolean;
+    retryConfig?:{
+    retry:number;
+    retryDelay:number;
+    failover:boolean;
+    }
 
   
 }

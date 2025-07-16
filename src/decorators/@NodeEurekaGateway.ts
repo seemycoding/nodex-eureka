@@ -21,18 +21,16 @@ const defaultfailover = NodeEurekaConfigService.getBoolean('FAILOVER', false);
 
 
 export function NodeEurekaGateway(options?: Gateway) {
-  return function (constructor: Function) {
-    console.log(defaultGlobalRateLimits);
-    
+  return function (constructor: Function) {    
     const appName = options?.appName || NodeEurekaConfigService.get('APP_NAME');
     const port = options?.port || defaultPort;
     const eurekaServerUrl = options?.eurekaServerUrl || defaultEurekaServerUrl;
     const routes = options?.routes || defaultRoutes;
-    const rateLimits: any = options?.rateLimits || defaultRateLimits;
-    const globalRateLimit = options?.globalRateLimit || defaultGlobalRateLimits;
-    const retry = options?.retry || defaultretryCount
-    const retryDelay = options?.retryDelay || deafultretryDelay;
-    const failover = options?.failover || defaultfailover;
+    const rateLimits: any = options?.rateLimit?.limits || defaultRateLimits;
+    const globalRateLimit = options?.rateLimit?.globalRateLimit || defaultGlobalRateLimits;
+    const retry = options?.retryConfig?.retry || defaultretryCount
+    const retryDelay = options?.retryConfig?.retryDelay || deafultretryDelay;
+    const failover = options?.retryConfig?.failover || defaultfailover;
     const app = express();
     app.use(express.json());
     if (options?.authFilters&&!options?.useBuiltInAuth) {
@@ -69,7 +67,7 @@ export function NodeEurekaGateway(options?: Gateway) {
     //   Promise.resolve(fn(req, res, next)).catch(next);
     // }; 
     // app.use(asyncMiddleware(createRateLimiter));
-
+    
     for (const route of routes) {
       const pathPredicate = route.predicates.find(p => p.startsWith('Path='));
       const stripPrefix = route.filters.find(f => f.startsWith('StripPrefix=')) || 'StripPrefix=0';
@@ -82,7 +80,10 @@ export function NodeEurekaGateway(options?: Gateway) {
           try {
             const serviceName = route.uri.replace('lb://', '');
             const serviceInstance = NodeEurekaRegistry.getInstance().getService(serviceName);
-
+            console.log(serviceName);
+            console.log(serviceInstance);
+            
+            
             if (!serviceInstance) {
               ServiceLogs.error(appName, `No instance found for ${serviceName}`)
               return res.status(503).send({ error: `No instance found for ${serviceName}` });
@@ -123,7 +124,6 @@ export function NodeEurekaGateway(options?: Gateway) {
 
     app.listen(port, () => {
       ServiceLogs.info(appName, `API Gateway running on port ${port}`)
-      console.log();
     });
 
     // Register gateway as a service

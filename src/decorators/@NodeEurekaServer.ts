@@ -66,6 +66,15 @@ export function NodeEurekaServer(options?: NodeEurekaServerOptions) {
         const registeredServices=registry.getServices()  
         res.json(registeredServices);
       });
+
+      app.get('/enviroment',(req,res)=>{
+         res.send({
+          env:process.env.NODE_ENV||"Development",
+          data_center_count:1
+         });
+      })
+
+   
       
       
         const dashboardPath = path.join(__dirname, '../dashboard'); // or '../dashboard' if outside dist

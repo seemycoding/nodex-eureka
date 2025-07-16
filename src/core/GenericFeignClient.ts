@@ -1,7 +1,15 @@
 import { NodeEurekaClientService } from "./NodeEurekaClientService";
 import { NodeEurekaLoadBalancer } from "./NodeEurekaLoadBalancer";
 import { ServiceLogs } from "./ServiceLogs";
+
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+// Singleton client instance
+let clientInstance: NodeEurekaClientService | null = null;
+
+const serviceCache: Record<string, any[]> = {};
+const cacheTTL = 10_000; // 10 seconds
+const lastCacheUpdate: Record<string, number> = {};
 
 export class GenericFeignClient {
   static async call({
@@ -14,7 +22,9 @@ export class GenericFeignClient {
     eurekaServerUrl,
     callerAppName = 'GenericCaller',
     callerPort = 0,
-    retry, retryDelay, failover
+    retry,
+    retryDelay,
+    failover,
   }: {
     serviceName: string;
     path: string;
@@ -25,22 +35,34 @@ export class GenericFeignClient {
     eurekaServerUrl: string;
     callerAppName?: string;
     callerPort?: number;
-    retry: number, retryDelay: number, failover: boolean;
+    retry: number;
+    retryDelay: number;
+    failover: boolean;
   }) {
+    if (!clientInstance) {
+      clientInstance = new NodeEurekaClientService({
+        appName: callerAppName,
+        port: callerPort,
+        eurekaServerUrl,
+        healthCheckPath: '/health'
+      });
+    }
 
-    const client = new NodeEurekaClientService({
-      appName: callerAppName,
-      port: callerPort,
-      eurekaServerUrl,
-      healthCheckPath: '/health'
-    });
+    let instances = serviceCache[serviceName];
+    const now = Date.now();
+    const isStale = !instances || (now - (lastCacheUpdate[serviceName] || 0) > cacheTTL);
 
-    const instances = await client.discover(serviceName);
-    if (!instances.length) throw new Error(`${serviceName} not found`);
+    if (isStale) {
+      instances = await clientInstance.discover(serviceName);
+      if (!instances.length) throw new Error(`${serviceName} not found`);
+
+      serviceCache[serviceName] = instances;
+      lastCacheUpdate[serviceName] = now;
+    }
 
     const maxRetries = retry ?? 1;
-    const Isfailover = failover ?? false;
-    const delay = retryDelay??500
+    const isFailover = failover ?? false;
+    const delay = retryDelay ?? 500;
 
     for (let i = 0; i < instances.length; i++) {
       const instanceMeta = NodeEurekaLoadBalancer.getInstance(serviceName, instances, 'ROUND_ROBIN');
@@ -52,27 +74,25 @@ export class GenericFeignClient {
         try {
           const fetchOpts: any = {
             method,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', ...headers }
           };
 
-          if (['POST', 'PUT'].includes(method)) {
-            fetchOpts.body = JSON.stringify(params[0]);
+          if (['POST', 'PUT', 'PATCH'].includes(method.toUpperCase()) && body) {
+            fetchOpts.body = JSON.stringify(body);
           }
 
           const response = await fetch(url, fetchOpts);
 
-          if (!response.ok) {
-            throw new Error(`HTTP error ${response.status}`);
-          }
+          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
 
-          return response
+          return response;
         } catch (err) {
           ServiceLogs.warn(serviceName, `Attempt ${attempt} failed on ${instanceMeta.ip}:${instanceMeta.port}: ${err}`);
           await wait(delay * attempt);
         }
       }
 
-      if (!Isfailover) break; // Stop if failover is disabled
+      if (!isFailover) break;
     }
 
     throw new Error(`All retries and failovers failed for ${serviceName}`);

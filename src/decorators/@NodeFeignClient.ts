@@ -8,28 +8,41 @@ import { NodeEurekaConfigService } from '../core/NodeEurekaConfigService';
 interface NodeFeignClientOptions {
   serviceName: string;
   callerPort?: number;
-  retry?: number;
-  failover?: boolean;
-  retryDelay?:number;
+  retryConfig?:{
+  retry: number;
+  failover: boolean;
+  retryDelay: number;
+  },
+  rcacheConfig?:{
+    ttl: number, // Cache TTL in milliseconds
+    enabled: boolean
+  }
+
 }
+
 const defaultretryCount = NodeEurekaConfigService.getNumber('RETRY_ATTEMPTS', 3);
 const deafultretryDelay = NodeEurekaConfigService.getNumber('RETRY_DELAY', 500);
-const defaultfailover = NodeEurekaConfigService.getBoolean('FAILOVER',false);
+const defaultfailover = NodeEurekaConfigService.getBoolean('FAILOVER', false);
 const defaultcallerPort = NodeEurekaConfigService.getNumber('CALLER_PORT');
 const defaultserviceName = NodeEurekaConfigService.get('SERVICE_NAME');
+const defaultcacheTTL = NodeEurekaConfigService.getNumber('DISCOVERY_CACHE_TTL', 10_000); // 10s
+
+const serviceCache: Record<string, any[]> = {};
+const lastCacheUpdate: Record<string, number> = {};
 
 const FEIGN_CLIENT_KEY = Symbol('FEIGN_CLIENT');
-
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export function NodeFeignClient(options?: NodeFeignClientOptions): ClassDecorator {
   return function (target: any) {
-    const retry = options?.retry||defaultretryCount
-    const retryDelay = options?.retryDelay||deafultretryDelay;
-    const failover = options?.failover||defaultfailover;
-    const callerPort = options?.callerPort||defaultcallerPort;
-    const serviceName = options?.serviceName||defaultserviceName;
-    Reflect.defineMetadata(FEIGN_CLIENT_KEY, {retry,retryDelay,failover,callerPort,serviceName}, target);
+    const retry = options?.retryConfig?.retry ?? defaultretryCount;
+    const retryDelay = options?.retryConfig?.retryDelay ?? deafultretryDelay;
+    const failover = options?.retryConfig?.failover ?? defaultfailover;
+    const callerPort = options?.callerPort ?? defaultcallerPort;
+    const serviceName = options?.serviceName ?? defaultserviceName;
+    const cacheTTL=options?.rcacheConfig?.ttl ?? defaultcacheTTL
+
+    Reflect.defineMetadata(FEIGN_CLIENT_KEY, { retry, retryDelay, failover, callerPort, serviceName }, target);
 
     return new Proxy(target, {
       construct(_, args) {
@@ -50,16 +63,30 @@ export function NodeFeignClient(options?: NodeFeignClientOptions): ClassDecorato
                 healthCheckPath: '/health'
               });
 
-              const instances = await client.discover(serviceName);
+              // Caching logic
+              let instances = serviceCache[serviceName];
+              const now = Date.now();
+              const isStale = !instances || (now - (lastCacheUpdate[serviceName] || 0) > cacheTTL);
 
-              if (!instances.length) {
+              if (isStale) {
+                try {
+                  instances = await client.discover(serviceName);
+                  serviceCache[serviceName] = instances;
+                  lastCacheUpdate[serviceName] = Date.now();
+                } catch (err) {
+                  ServiceLogs.warn(serviceName, `Discovery failed: ${err}`);
+                  throw new Error(`${serviceName} discovery failed`);
+                }
+              }
+
+              if (!instances || !instances.length) {
                 ServiceLogs.warn(serviceName, `${serviceName} not found`);
                 throw new Error(`${serviceName} not found`);
               }
 
-              const maxRetries = retry ?? 1;
-              const Isfailover = failover ?? false;
-              const delay = retryDelay??500
+              const maxRetries = retry;
+              const Isfailover = failover;
+              const delay = retryDelay;
 
               for (let i = 0; i < instances.length; i++) {
                 const instanceMeta = NodeEurekaLoadBalancer.getInstance(serviceName, instances, 'ROUND_ROBIN');
@@ -69,6 +96,8 @@ export function NodeFeignClient(options?: NodeFeignClientOptions): ClassDecorato
                 const method = methodMeta.method;
 
                 for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                  console.log(`trying ${attempt} on node feign at ${url}`);
+
                   try {
                     const fetchOpts: any = {
                       method,
@@ -88,6 +117,7 @@ export function NodeFeignClient(options?: NodeFeignClientOptions): ClassDecorato
                     return await response.json();
                   } catch (err) {
                     ServiceLogs.warn(serviceName, `Attempt ${attempt} failed on ${instanceMeta.ip}:${instanceMeta.port}: ${err}`);
+                    console.log(`Failed ${attempt} on node feign at ${url}`);
                     await wait(delay * attempt);
                   }
                 }

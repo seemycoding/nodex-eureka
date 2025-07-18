@@ -2,7 +2,12 @@
   "name": "@seemycode/nodex-eureka",
   "version": "1.0.0",
   "description": "Eureka Server For Node",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+  "dist",
+  "README.md"
+],
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/decorators/@NodeEurekaServer.ts"

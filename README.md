@@ -18,10 +18,12 @@ Official website: [https://nodex.nodeinit.dev](https://nodex.nodeinit.dev)
 - 💬 **Feign-style HTTP Client** — Declaratively call services using intuitive syntax.
 - 🛡️ **Gateway Support** — Configure routes, rate limiting, retry policies, and more.
 - 🛠️ **Lightweight & Modular** — Designed to work with any Node.js framework (Express, Fastify, etc.)
+- 🛠️ **Lightweight Dashboard** — Comes with a lightweight dashboard helps you monitoring status of service.
+
 
 ---
 
 ## 📦 Installation
 
 ```bash
-npm install node-eureka
+npm install nodex-eureka

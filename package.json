@@ -8,6 +8,14 @@
     "dist",
     "README.md"
   ],
+  "homepage": "https://nodex.nodeinit.dev",  
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seemycoding/nodex-eureka.git"
+  },
+  "bugs": {
+    "url": "https://github.com/seemycoding/nodex-eureka/issues"
+  },
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/decorators/@NodeEurekaServer.ts"

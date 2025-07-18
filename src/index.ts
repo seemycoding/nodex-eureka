@@ -1,5 +1,5 @@
-export { NodeEurekaServer } from './decorators/@NodeEurekaServer';
-export { NodeEurekaClient } from './decorators/@NodeEurekaClient';
-export {NodeFeignClient} from './decorators/@NodeFeignClient'
-export {NodeEurekaGateway} from './decorators/@NodeEurekaGateway'
+export { NodexEurekaServer } from './decorators/@NodexEurekaServer';
+export { NodexEurekaClient } from './decorators/@NodexEurekaClient';
+export {NodexFeignClient} from './decorators/@NodexFeignClient'
+export {NodexEurekaGateway} from './decorators/@NodexEurekaGateway'
 export * from "./decorators/HttpMethods"

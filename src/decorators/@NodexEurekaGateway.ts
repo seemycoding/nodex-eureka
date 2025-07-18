@@ -20,7 +20,7 @@ const deafultretryDelay = NodeEurekaConfigService.getNumber('RETRY_DELAY', 500);
 const defaultfailover = NodeEurekaConfigService.getBoolean('FAILOVER', false);
 
 
-export function NodeEurekaGateway(options?: Gateway) {
+export function NodexEurekaGateway(options?: Gateway) {
   return function (constructor: Function) {    
     const appName = options?.appName || NodeEurekaConfigService.get('APP_NAME');
     const port = options?.port || defaultPort;

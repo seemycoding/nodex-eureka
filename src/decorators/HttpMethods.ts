@@ -18,4 +18,6 @@ export const GET = createMethodDecorator('GET');
 export const POST = createMethodDecorator('POST');
 export const PUT = createMethodDecorator('PUT');
 export const DELETE = createMethodDecorator('DELETE');
+export const PATCH = createMethodDecorator('PATCH');
+
 export { METHOD_META_KEY };

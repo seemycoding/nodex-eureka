@@ -13,7 +13,7 @@ const defaultPort = NodeEurekaConfigService.getNumber('PORT');
 const defaulteurekaServerUrl = NodeEurekaConfigService.get('EUREKA_SERVER_URL');
 const defaulthealthCheckPath = NodeEurekaConfigService.get('HEALTH_CHECK_PATH', '/health');
 
-export function NodeEurekaClient(options?: NodeEurekaClientOptions) {
+export function NodexEurekaClient(options?: NodeEurekaClientOptions) {
   return function (constructor: Function) {
     const appName = options?.appName || defaultAppName;
     const port = options?.port || defaultPort;

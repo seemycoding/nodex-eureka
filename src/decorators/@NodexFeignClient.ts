@@ -33,7 +33,7 @@ const lastCacheUpdate: Record<string, number> = {};
 const FEIGN_CLIENT_KEY = Symbol('FEIGN_CLIENT');
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-export function NodeFeignClient(options?: NodeFeignClientOptions): ClassDecorator {
+export function NodexFeignClient(options?: NodeFeignClientOptions): ClassDecorator {
   return function (target: any) {
     const retry = options?.retryConfig?.retry ?? defaultretryCount;
     const retryDelay = options?.retryConfig?.retryDelay ?? deafultretryDelay;
